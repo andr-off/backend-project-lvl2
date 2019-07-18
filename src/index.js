@@ -1,5 +1,7 @@
 import fs from 'fs';
 import _ from 'lodash';
+import path from 'path';
+import parse from './parsers';
 
 const compare = (object1, object2) => {
   const keys = [...Object.keys(object1), ...Object.keys(object2)];
@@ -37,9 +39,11 @@ const genDiff = (pathToConfig1, pathToConfig2) => {
 
   const config1 = fs.readFileSync(pathToConfig1);
   const config2 = fs.readFileSync(pathToConfig2);
+  const ext1 = path.extname(pathToConfig1);
+  const ext2 = path.extname(pathToConfig2);
 
-  const obj1 = JSON.parse(config1);
-  const obj2 = JSON.parse(config2);
+  const obj1 = parse(config1, ext1);
+  const obj2 = parse(config2, ext2);
 
   return `{\n${compare(obj1, obj2)}\n}`;
 };
