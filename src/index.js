@@ -37,8 +37,9 @@ const genDiff = (pathToConfig1, pathToConfig2) => {
     return '';
   }
 
-  const config1 = fs.readFileSync(pathToConfig1);
-  const config2 = fs.readFileSync(pathToConfig2);
+  const config1 = fs.readFileSync(pathToConfig1, 'utf-8');
+  const config2 = fs.readFileSync(pathToConfig2, 'utf-8');
+
   const ext1 = path.extname(pathToConfig1);
   const ext2 = path.extname(pathToConfig2);
 

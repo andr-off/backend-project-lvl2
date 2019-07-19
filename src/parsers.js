@@ -1,4 +1,5 @@
 import yaml from 'js-yaml';
+import ini from 'ini';
 
 const parsers = [
   {
@@ -8,6 +9,10 @@ const parsers = [
   {
     ext: '.yml',
     parser: data => yaml.safeLoad(data),
+  },
+  {
+    ext: '.ini',
+    parser: data => ini.parse(data),
   },
 ];
 
