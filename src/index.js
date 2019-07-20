@@ -3,25 +3,111 @@ import _ from 'lodash';
 import path from 'path';
 import parse from './parsers';
 
-const compare = (object1, object2) => {
+const makeAST = (object1, object2) => {
   const keys = [...Object.keys(object1), ...Object.keys(object2)];
   const uniqKeys = Array.from(new Set(keys)).sort();
 
-  const result = uniqKeys.map((key) => {
-    if (_.has(object2, key) && object1[key] === object2[key]) {
-      return `    ${key}: ${object1[key]}`;
+  const ast = uniqKeys.reduce((acc, key) => {
+    if (!_.has(object2, key)) {
+      const item = {
+        keyName: key,
+        status: 'deleted',
+        value: object1[key],
+        oldValue: '',
+        children: [],
+      };
+
+      return [...acc, item];
     }
 
     if (!_.has(object1, key)) {
-      return `  + ${key}: ${object2[key]}`;
+      const item = {
+        keyName: key,
+        status: 'added',
+        value: object2[key],
+        oldValue: '',
+        children: [],
+      };
+
+      return [...acc, item];
     }
 
-    if (!_.has(object2, key)) {
-      return `  - ${key}: ${object1[key]}`;
+    if (object1[key] instanceof Object && object2[key] instanceof Object) {
+      const item = {
+        keyName: key,
+        status: 'checkChildren',
+        value: '',
+        oldValue: '',
+        children: makeAST(object1[key], object2[key]),
+      };
+
+      return [...acc, item];
     }
 
-    return `  + ${key}: ${object2[key]}\n  - ${key}: ${object1[key]}`;
-  }).join('\n');
+    if (object1[key] === object2[key]) {
+      const item = {
+        keyName: key,
+        status: 'notModified',
+        value: object1[key],
+        oldValue: '',
+        children: [],
+      };
+
+      return [...acc, item];
+    }
+
+    const item = {
+      keyName: key,
+      status: 'modified',
+      value: object2[key],
+      oldValue: object1[key],
+      children: [],
+    };
+
+    return [...acc, item];
+  }, []);
+
+  return ast;
+};
+
+const stringify = (item, indent) => {
+  if (!(item instanceof Object)) {
+    return item;
+  }
+
+  return Object.entries(item)
+    .map(([key, value]) => [
+      `{\n${indent}${' '.repeat(6)}${key}: ${value}`,
+      `${indent}  }`,
+    ].join('\n'));
+};
+
+const render = (ast) => {
+  const actions = {
+    notModified: (item, indent) => `${indent}  ${item.keyName}: ${stringify(item.value, indent)}`,
+    modified: (item, indent) => [
+      `${indent}+ ${item.keyName}: ${stringify(item.value, indent)}`,
+      `${indent}- ${item.keyName}: ${stringify(item.oldValue, indent)}`,
+    ].join('\n'),
+    added: (item, indent) => `${indent}+ ${item.keyName}: ${stringify(item.value, indent)}`,
+    deleted: (item, indent) => `${indent}- ${item.keyName}: ${stringify(item.value, indent)}`,
+    checkChildren: (item, indent, func, depth) => [
+      `${indent}  ${item.keyName}: {`,
+      `${func(item.children, depth + 1)}\n${indent}  }`,
+    ].join('\n'),
+  };
+
+  const iter = (items, depth = 0) => {
+    const indent = ' '.repeat(2);
+    const doubleIndent = indent.repeat(2);
+    const depthIndent = doubleIndent.repeat(depth);
+    const indentation = `${depthIndent}${indent}`;
+
+
+    return items.map(element => actions[element.status](element, indentation, iter, depth)).join('\n');
+  };
+
+  const result = `{\n${iter(ast)}\n}`;
 
   return result;
 };
@@ -46,7 +132,10 @@ const genDiff = (pathToConfig1, pathToConfig2) => {
   const obj1 = parse(config1, ext1);
   const obj2 = parse(config2, ext2);
 
-  return `{\n${compare(obj1, obj2)}\n}`;
+  const ast = makeAST(obj1, obj2);
+  const result = render(ast);
+
+  return result;
 };
 
 export default genDiff;
