@@ -1,0 +1,20 @@
+---
+
+common:
+  setting2: '200'
+  setting1: 'Value 1'
+  setting3: true
+  setting6:
+    key: value
+    key2:
+      tt: old
+      dd: old
+
+group2:
+  abc: '12345'
+
+group1:
+  foo: bar
+  baz: bas
+  nest:
+    key: 'value'
