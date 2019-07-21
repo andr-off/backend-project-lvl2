@@ -24,3 +24,7 @@ group1:
   baz: bars
   foo: bar
   nest: str
+
+verbose: true
+timeout: 20
+host: 'hexlet.io'
