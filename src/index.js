@@ -35,7 +35,7 @@ const makeAST = (object1, object2) => {
     if (object1[key] instanceof Object && object2[key] instanceof Object) {
       const item = {
         keyName: key,
-        status: 'checkChildren',
+        status: 'withChidlren',
         value: '',
         oldValue: '',
         children: makeAST(object1[key], object2[key]),
@@ -82,27 +82,34 @@ const stringify = (item, indent) => {
     ].join('\n'));
 };
 
-const render = (ast) => {
-  const actions = {
-    notModified: (item, indent) => `${indent}  ${item.keyName}: ${stringify(item.value, indent)}`,
-    modified: (item, indent) => [
-      `${indent}+ ${item.keyName}: ${stringify(item.value, indent)}`,
-      `${indent}- ${item.keyName}: ${stringify(item.oldValue, indent)}`,
-    ].join('\n'),
-    added: (item, indent) => `${indent}+ ${item.keyName}: ${stringify(item.value, indent)}`,
-    deleted: (item, indent) => `${indent}- ${item.keyName}: ${stringify(item.value, indent)}`,
-    checkChildren: (item, indent, func, depth) => [
-      `${indent}  ${item.keyName}: {`,
-      `${func(item.children, depth + 1)}\n${indent}  }`,
-    ].join('\n'),
-  };
+const makeString = (keyName, value, symbol, indent) => (
+  `${indent}${symbol} ${keyName}: ${stringify(value, indent)}`
+);
 
+const actions = {
+  notModified: (item, indent) => makeString(item.keyName, item.value, ' ', indent),
+
+  modified: (item, indent) => [
+    makeString(item.keyName, item.value, '+', indent),
+    makeString(item.keyName, item.oldValue, '-', indent),
+  ].join('\n'),
+
+  added: (item, indent) => makeString(item.keyName, item.value, '+', indent),
+
+  deleted: (item, indent) => makeString(item.keyName, item.value, '-', indent),
+
+  withChidlren: (item, indent, func, depth) => [
+    `${indent}  ${item.keyName}: {`,
+    `${func(item.children, depth + 1)}\n${indent}  }`,
+  ].join('\n'),
+};
+
+const render = (ast) => {
   const iter = (items, depth = 0) => {
     const indent = ' '.repeat(2);
     const doubleIndent = indent.repeat(2);
     const depthIndent = doubleIndent.repeat(depth);
     const indentation = `${depthIndent}${indent}`;
-
 
     return items.map(element => actions[element.status](element, indentation, iter, depth)).join('\n');
   };
