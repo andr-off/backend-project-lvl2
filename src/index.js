@@ -14,8 +14,11 @@ class Node {
 }
 
 const makeAST = (object1, object2) => {
-  const keys = [...Object.keys(object1), ...Object.keys(object2)];
-  const uniqKeys = Array.from(new Set(keys)).sort();
+  const keys1 = Object.keys(object1);
+  const keys2 = Object.keys(object2);
+  const keys = [...keys1, ...keys2];
+  const setOfKeys = new Set(keys);
+  const uniqKeys = Array.from(setOfKeys).sort();
 
   const ast = uniqKeys.map((key) => {
     if (!_.has(object2, key)) {
