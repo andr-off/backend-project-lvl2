@@ -3,69 +3,39 @@ import _ from 'lodash';
 import path from 'path';
 import parse from './parsers';
 
+class Node {
+  constructor(keyName, status, value = '', oldValue = '', children = []) {
+    this.keyName = keyName;
+    this.status = status;
+    this.value = value;
+    this.oldValue = oldValue;
+    this.children = children;
+  }
+}
+
 const makeAST = (object1, object2) => {
   const keys = [...Object.keys(object1), ...Object.keys(object2)];
   const uniqKeys = Array.from(new Set(keys)).sort();
 
-  const ast = uniqKeys.reduce((acc, key) => {
+  const ast = uniqKeys.map((key) => {
     if (!_.has(object2, key)) {
-      const item = {
-        keyName: key,
-        status: 'deleted',
-        value: object1[key],
-        oldValue: '',
-        children: [],
-      };
-
-      return [...acc, item];
+      return new Node(key, 'deleted', object1[key]);
     }
 
     if (!_.has(object1, key)) {
-      const item = {
-        keyName: key,
-        status: 'added',
-        value: object2[key],
-        oldValue: '',
-        children: [],
-      };
-
-      return [...acc, item];
+      return new Node(key, 'added', object2[key]);
     }
 
     if (object1[key] instanceof Object && object2[key] instanceof Object) {
-      const item = {
-        keyName: key,
-        status: 'withChidlren',
-        value: '',
-        oldValue: '',
-        children: makeAST(object1[key], object2[key]),
-      };
-
-      return [...acc, item];
+      return new Node(key, 'withChildren', '', '', makeAST(object1[key], object2[key]));
     }
 
     if (object1[key] === object2[key]) {
-      const item = {
-        keyName: key,
-        status: 'notModified',
-        value: object1[key],
-        oldValue: '',
-        children: [],
-      };
-
-      return [...acc, item];
+      return new Node(key, 'notModified', object1[key]);
     }
 
-    const item = {
-      keyName: key,
-      status: 'modified',
-      value: object2[key],
-      oldValue: object1[key],
-      children: [],
-    };
-
-    return [...acc, item];
-  }, []);
+    return new Node(key, 'modified', object2[key], object1[key]);
+  });
 
   return ast;
 };
@@ -98,7 +68,7 @@ const actions = {
 
   deleted: (item, indent) => makeString(item.keyName, item.value, '-', indent),
 
-  withChidlren: (item, indent, func, depth) => [
+  withChildren: (item, indent, func, depth) => [
     `${indent}  ${item.keyName}: {`,
     `${func(item.children, depth + 1)}\n${indent}  }`,
   ].join('\n'),
@@ -111,7 +81,12 @@ const render = (ast) => {
     const depthIndent = doubleIndent.repeat(depth);
     const indentation = `${depthIndent}${indent}`;
 
-    return items.map(element => actions[element.status](element, indentation, iter, depth)).join('\n');
+    return items.map(
+      (element) => {
+        const action = actions[element.status];
+        return action(element, indentation, iter, depth);
+      },
+    ).join('\n');
   };
 
   const result = `{\n${iter(ast)}\n}`;
