@@ -2,11 +2,12 @@ import fs from 'fs';
 import _ from 'lodash';
 import path from 'path';
 import parse from './parsers';
+import render from './formatters';
 
 class Node {
-  constructor(keyName, status, value = '', oldValue = '', children = []) {
-    this.keyName = keyName;
-    this.status = status;
+  constructor(name, type, value = '', oldValue = '', children = []) {
+    this.name = name;
+    this.type = type;
     this.value = value;
     this.oldValue = oldValue;
     this.children = children;
@@ -43,61 +44,7 @@ const makeAST = (object1, object2) => {
   return ast;
 };
 
-const stringify = (item, indent) => {
-  if (!(item instanceof Object)) {
-    return item;
-  }
-
-  return Object.entries(item)
-    .map(([key, value]) => [
-      `{\n${indent}${' '.repeat(6)}${key}: ${value}`,
-      `${indent}  }`,
-    ].join('\n'));
-};
-
-const makeString = (keyName, value, symbol, indent) => (
-  `${indent}${symbol} ${keyName}: ${stringify(value, indent)}`
-);
-
-const actions = {
-  notModified: (item, indent) => makeString(item.keyName, item.value, ' ', indent),
-
-  modified: (item, indent) => [
-    makeString(item.keyName, item.value, '+', indent),
-    makeString(item.keyName, item.oldValue, '-', indent),
-  ].join('\n'),
-
-  added: (item, indent) => makeString(item.keyName, item.value, '+', indent),
-
-  deleted: (item, indent) => makeString(item.keyName, item.value, '-', indent),
-
-  withChildren: (item, indent, func, depth) => [
-    `${indent}  ${item.keyName}: {`,
-    `${func(item.children, depth + 1)}\n${indent}  }`,
-  ].join('\n'),
-};
-
-const render = (ast) => {
-  const iter = (items, depth = 0) => {
-    const indent = ' '.repeat(2);
-    const doubleIndent = indent.repeat(2);
-    const depthIndent = doubleIndent.repeat(depth);
-    const indentation = `${depthIndent}${indent}`;
-
-    return items.map(
-      (element) => {
-        const action = actions[element.status];
-        return action(element, indentation, iter, depth);
-      },
-    ).join('\n');
-  };
-
-  const result = `{\n${iter(ast)}\n}`;
-
-  return result;
-};
-
-const genDiff = (pathToConfig1, pathToConfig2) => {
+const genDiff = (pathToConfig1, pathToConfig2, format) => {
   if (!fs.existsSync(pathToConfig1)) {
     console.log(`No such file: ${pathToConfig1}`);
     return '';
@@ -118,7 +65,7 @@ const genDiff = (pathToConfig1, pathToConfig2) => {
   const obj2 = parse(config2, ext2);
 
   const ast = makeAST(obj1, obj2);
-  const result = render(ast);
+  const result = render(ast, format);
 
   return result;
 };
