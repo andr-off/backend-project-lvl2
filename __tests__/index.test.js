@@ -2,6 +2,7 @@ import fs from 'fs';
 import genDiff from '../src';
 
 const expected = fs.readFileSync(`${__dirname}/__fixtures__/expected.txt`, 'utf-8');
+const expected2 = fs.readFileSync(`${__dirname}/__fixtures__/expected-plain.txt`, 'utf-8');
 
 const table = ['json', 'yml', 'ini'].map((ext) => {
   const path1 = `${__dirname}/__fixtures__/before.${ext}`;
@@ -14,7 +15,9 @@ test.each(table)(
   '%s configs',
   (testName, path1, path2) => {
     const diff = genDiff(path1, path2);
+    const diff2 = genDiff(path1, path2, 'plain');
 
     expect(diff).toBe(expected);
+    expect(diff2).toBe(expected2);
   },
 );
