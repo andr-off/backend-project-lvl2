@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 const makeIndent = (times) => {
   const indent = ' '.repeat(2);
   const doubleIndent = indent.repeat(2);
@@ -7,7 +9,7 @@ const makeIndent = (times) => {
 };
 
 const stringify = (item, depth) => {
-  if (!(item instanceof Object)) {
+  if (!_.isObject(item)) {
     return item;
   }
 
