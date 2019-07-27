@@ -5,7 +5,7 @@ const stringify = (value) => {
     return '[complex value]';
   }
 
-  if (_.isString(value) && _.isNaN(Number(value))) {
+  if (_.isString(value)) {
     return `'${value}'`;
   }
 
@@ -14,21 +14,21 @@ const stringify = (value) => {
 
 const makePath = (path, next) => `${path}${path ? '.' : ''}${next}`;
 
-const makeString = (path, item) => `Property '${makePath(path, item.name)}' was`;
+const makeString = (path, item) => `Property '${makePath(path, item.propertyName)}' was`;
 
 const actions = {
   notModified: () => '',
 
   modified: (item, path) => [
     `${makeString(path, item)} updated.`,
-    `From ${stringify(item.oldValue)} to ${stringify(item.value)}`,
+    `From ${stringify(item.oldValue)} to ${stringify(item.newValue)}`,
   ].join(' '),
 
-  added: (item, path) => `${makeString(path, item)} added with value: ${stringify(item.value)}`,
+  added: (item, path) => `${makeString(path, item)} added with value: ${stringify(item.newValue)}`,
 
   deleted: (item, path) => `${makeString(path, item)} removed`,
 
-  withChildren: (item, path, func) => func(item.children, makePath(path, item.name)),
+  withChildren: (item, path, func) => func(item.children, makePath(path, item.propertyName)),
 };
 
 export default (ast) => {

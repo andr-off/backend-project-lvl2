@@ -1,11 +1,9 @@
 import _ from 'lodash';
 
 const makeIndent = (times) => {
-  const indent = ' '.repeat(2);
-  const doubleIndent = indent.repeat(2);
-  const indentation = doubleIndent.repeat(times);
+  const indentation = ' '.repeat(2);
 
-  return `${indentation}${indent}`;
+  return indentation.repeat(times);
 };
 
 const stringify = (item, depth) => {
@@ -15,41 +13,41 @@ const stringify = (item, depth) => {
 
   return Object.entries(item)
     .map(([key, value]) => [
-      `{\n${makeIndent(depth)}${' '.repeat(6)}${key}: ${value}`,
-      `${makeIndent(depth)}  }`,
+      `{\n${makeIndent(depth + 1)}  ${key}: ${value}`,
+      `${makeIndent(depth)}}`,
     ].join('\n'));
 };
 
-const makeString = (name, value, symbol, depth) => (
-  `${makeIndent(depth)}${symbol} ${name}: ${stringify(value, depth)}`
+const makeString = (propertyName, value, symbol, depth) => (
+  `${makeIndent(depth)}${symbol} ${propertyName}: ${stringify(value, depth + 1)}`
 );
 
 const actions = {
-  notModified: (item, depth) => makeString(item.name, item.value, ' ', depth),
+  notModified: (item, depth) => makeString(item.propertyName, item.oldValue, ' ', depth),
 
   modified: (item, depth) => [
-    makeString(item.name, item.value, '+', depth),
-    makeString(item.name, item.oldValue, '-', depth),
+    makeString(item.propertyName, item.newValue, '+', depth),
+    makeString(item.propertyName, item.oldValue, '-', depth),
   ].join('\n'),
 
-  added: (item, depth) => makeString(item.name, item.value, '+', depth),
+  added: (item, depth) => makeString(item.propertyName, item.newValue, '+', depth),
 
-  deleted: (item, depth) => makeString(item.name, item.value, '-', depth),
+  deleted: (item, depth) => makeString(item.propertyName, item.oldValue, '-', depth),
 
   withChildren: (item, depth, func) => [
-    `${makeIndent(depth)}  ${item.name}: {`,
-    `${func(item.children, depth + 1)}\n${makeIndent(depth)}  }`,
+    `${makeIndent(depth)}  ${item.propertyName}: {`,
+    `${func(item.children, depth + 2)}\n${makeIndent(depth + 1)}}`,
   ].join('\n'),
 };
 
 export default (ast) => {
-  const iter = (items, depth) => items.map((element) => {
-    const action = actions[element.type];
+  const iter = (items, depth) => items.map((item) => {
+    const action = actions[item.type];
 
-    return action(element, depth, iter);
+    return action(item, depth, iter);
   }).join('\n');
 
-  const result = `{\n${iter(ast, 0)}\n}`;
+  const result = `{\n${iter(ast, 1)}\n}`;
 
   return result;
 };
