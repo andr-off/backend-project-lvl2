@@ -29,6 +29,6 @@
     "nest": "str"
   },
   "verbose": true,
-  "timeout": 20,
+  "timeout": "20",
   "host": "hexlet.io"
 }
