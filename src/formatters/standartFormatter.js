@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
-const makeIndent = (times) => {
-  const indentation = ' '.repeat(2);
+const makeIndent = (times, numerOfSpaces = 2) => {
+  const indentation = ' '.repeat(numerOfSpaces);
 
   return indentation.repeat(times);
 };

@@ -4,37 +4,51 @@ import path from 'path';
 import parse from './parsers';
 import render from './formatters';
 
-class Node {
-  constructor(propertyName, type, oldValue = '', newValue = '', children = []) {
-    this.propertyName = propertyName;
-    this.type = type;
-    this.oldValue = oldValue;
-    this.newValue = newValue;
-    this.children = children;
-  }
-}
-
 const makeAST = (object1, object2) => {
   const keys = _.union(_.keys(object1), _.keys(object2)).sort();
 
   const ast = keys.map((key) => {
+    const node = {
+      propertyName: key,
+      type: '',
+      oldValue: '',
+      newValue: '',
+      children: [],
+    };
+
     if (!_.has(object2, key)) {
-      return new Node(key, 'deleted', object1[key]);
+      node.type = 'deleted';
+      node.oldValue = object1[key];
+
+      return node;
     }
 
     if (!_.has(object1, key)) {
-      return new Node(key, 'added', '', object2[key]);
+      node.type = 'added';
+      node.newValue = object2[key];
+
+      return node;
     }
 
     if (_.isObject(object1[key]) && _.isObject(object2[key])) {
-      return new Node(key, 'withChildren', '', '', makeAST(object1[key], object2[key]));
+      node.type = 'withChildren';
+      node.children = makeAST(object1[key], object2[key]);
+
+      return node;
     }
 
     if (object1[key] === object2[key]) {
-      return new Node(key, 'notModified', object1[key]);
+      node.type = 'notModified';
+      node.oldValue = object1[key];
+
+      return node;
     }
 
-    return new Node(key, 'modified', object1[key], object2[key]);
+    node.type = 'modified';
+    node.oldValue = object1[key];
+    node.newValue = object2[key];
+
+    return node;
   });
 
   return ast;
