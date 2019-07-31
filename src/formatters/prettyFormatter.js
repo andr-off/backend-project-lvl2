@@ -28,26 +28,25 @@ const actions = {
   modified: (item, depth) => [
     makeString(item.propertyName, item.newValue, '+', depth),
     makeString(item.propertyName, item.oldValue, '-', depth),
-  ].join('\n'),
+  ],
 
   added: (item, depth) => makeString(item.propertyName, item.newValue, '+', depth),
 
   deleted: (item, depth) => makeString(item.propertyName, item.oldValue, '-', depth),
 
-  withChildren: (item, depth, func) => [
+  withChildren: (item, depth) => [
     `${makeIndent(depth)}  ${item.propertyName}: {`,
-    `${func(item.children, depth + 2)}\n${makeIndent(depth + 1)}}`,
-  ].join('\n'),
+    item.children.map(element => actions[element.type](element, depth + 2)),
+    `${makeIndent(depth + 1)}}`,
+  ],
 };
 
 export default (ast) => {
-  const iter = (items, depth) => items.map((item) => {
+  const result = ast.map((item) => {
     const action = actions[item.type];
 
-    return action(item, depth, iter);
-  }).join('\n');
+    return action(item, 1);
+  });
 
-  const result = `{\n${iter(ast, 1)}\n}`;
-
-  return result;
+  return `{\n${_.flattenDeep(result).join('\n')}\n}`;
 };

@@ -17,7 +17,7 @@ const makePath = (path, next) => `${path}${path ? '.' : ''}${next}`;
 const makeString = (path, item) => `Property '${makePath(path, item.propertyName)}' was`;
 
 const actions = {
-  notModified: () => '',
+  notModified: () => [],
 
   modified: (item, path) => [
     `${makeString(path, item)} updated.`,
@@ -28,21 +28,19 @@ const actions = {
 
   deleted: (item, path) => `${makeString(path, item)} removed`,
 
-  withChildren: (item, path, func) => func(item.children, makePath(path, item.propertyName)),
+  withChildren: (item, path) => item.children.map((element) => {
+    const action = actions[element.type];
+
+    return action(element, makePath(path, item.propertyName));
+  }),
 };
 
 export default (ast) => {
-  const iter = (items, path) => {
-    const result = items.map((element) => {
-      const action = actions[element.type];
+  const result = ast.map((item) => {
+    const action = actions[item.type];
 
-      return action(element, path, iter);
-    });
+    return action(item, '');
+  });
 
-    return result
-      .filter(str => str !== '')
-      .join('\n');
-  };
-
-  return iter(ast, '');
+  return _.flattenDeep(result).join('\n');
 };
