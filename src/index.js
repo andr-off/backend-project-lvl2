@@ -8,61 +8,61 @@ const makeAST = (object1, object2) => {
   const keys = _.union(_.keys(object1), _.keys(object2)).sort();
 
   const ast = keys.map((key) => {
-    const node = {
-      propertyName: key,
-      type: '',
-      oldValue: '',
-      newValue: '',
-      children: [],
-    };
-
     if (!_.has(object2, key)) {
-      node.type = 'deleted';
-      node.oldValue = object1[key];
-
-      return node;
+      return {
+        propertyName: key,
+        type: 'deleted',
+        oldValue: object1[key],
+        newValue: '',
+        children: [],
+      };
     }
 
     if (!_.has(object1, key)) {
-      node.type = 'added';
-      node.newValue = object2[key];
-
-      return node;
+      return {
+        propertyName: key,
+        type: 'added',
+        oldValue: '',
+        newValue: object2[key],
+        children: [],
+      };
     }
 
     if (_.isObject(object1[key]) && _.isObject(object2[key])) {
-      node.type = 'withChildren';
-      node.children = makeAST(object1[key], object2[key]);
-
-      return node;
+      return {
+        propertyName: key,
+        type: 'withChildren',
+        oldValue: '',
+        newValue: '',
+        children: makeAST(object1[key], object2[key]),
+      };
     }
 
     if (object1[key] === object2[key]) {
-      node.type = 'notModified';
-      node.oldValue = object1[key];
-
-      return node;
+      return {
+        propertyName: key,
+        type: 'notModified',
+        oldValue: object1[key],
+        newValue: '',
+        children: [],
+      };
     }
 
-    node.type = 'modified';
-    node.oldValue = object1[key];
-    node.newValue = object2[key];
-
-    return node;
+    return {
+      propertyName: key,
+      type: 'modified',
+      oldValue: object1[key],
+      newValue: object2[key],
+      children: [],
+    };
   });
 
   return ast;
 };
 
 const genDiff = (pathToConfig1, pathToConfig2, format) => {
-  if (!fs.existsSync(pathToConfig1)) {
-    console.log(`No such file: ${pathToConfig1}`);
-    return '';
-  }
-
-  if (!fs.existsSync(pathToConfig2)) {
-    console.log(`No such file: ${pathToConfig2}`);
-    return '';
+  if (!fs.existsSync(pathToConfig1) || !fs.existsSync(pathToConfig2)) {
+    throw new Error('File not found.');
   }
 
   const config1 = fs.readFileSync(pathToConfig1, 'utf-8');
