@@ -3,9 +3,9 @@ import plainFormat from './plainFormatter';
 import jsonFormat from './jsonFormatter';
 
 const formatters = {
-  standart: ast => prettyFormat(ast),
-  plain: ast => plainFormat(ast),
-  json: ast => jsonFormat(ast),
+  pretty: prettyFormat,
+  plain: plainFormat,
+  json: jsonFormat,
 };
 
-export default (ast, format = 'standart') => formatters[format](ast);
+export default (ast, format = 'pretty') => formatters[format](ast);

@@ -34,19 +34,19 @@ const actions = {
 
   deleted: (item, depth) => makeString(item.propertyName, item.oldValue, '-', depth),
 
-  withChildren: (item, depth) => [
-    `${makeIndent(depth)}  ${item.propertyName}: {`,
-    item.children.map(element => actions[element.type](element, depth + 2)),
-    `${makeIndent(depth + 1)}}`,
+  withChildren: (item, depth, func) => [
+    `${makeIndent(depth)}  ${item.propertyName}: ${func(item.children, depth + 1)}`,
   ],
 };
 
-export default (ast) => {
+const prettyFormat = (ast, depth = 0) => {
   const result = ast.map((item) => {
     const action = actions[item.type];
 
-    return action(item, 1);
+    return action(item, depth + 1, prettyFormat);
   });
 
-  return `{\n${_.flattenDeep(result).join('\n')}\n}`;
+  return `{\n${_.flattenDeep(result).join('\n')}\n${makeIndent(depth)}}`;
 };
+
+export default prettyFormat;

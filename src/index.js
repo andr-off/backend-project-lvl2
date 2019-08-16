@@ -13,8 +13,6 @@ const makeAST = (object1, object2) => {
         propertyName: key,
         type: 'deleted',
         oldValue: object1[key],
-        newValue: '',
-        children: [],
       };
     }
 
@@ -22,9 +20,7 @@ const makeAST = (object1, object2) => {
       return {
         propertyName: key,
         type: 'added',
-        oldValue: '',
         newValue: object2[key],
-        children: [],
       };
     }
 
@@ -32,8 +28,6 @@ const makeAST = (object1, object2) => {
       return {
         propertyName: key,
         type: 'withChildren',
-        oldValue: '',
-        newValue: '',
         children: makeAST(object1[key], object2[key]),
       };
     }
@@ -43,8 +37,6 @@ const makeAST = (object1, object2) => {
         propertyName: key,
         type: 'notModified',
         oldValue: object1[key],
-        newValue: '',
-        children: [],
       };
     }
 
@@ -53,7 +45,6 @@ const makeAST = (object1, object2) => {
       type: 'modified',
       oldValue: object1[key],
       newValue: object2[key],
-      children: [],
     };
   });
 

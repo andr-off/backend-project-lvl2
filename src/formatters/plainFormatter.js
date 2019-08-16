@@ -28,19 +28,17 @@ const actions = {
 
   deleted: (item, path) => `${makeString(path, item)} removed`,
 
-  withChildren: (item, path) => item.children.map((element) => {
-    const action = actions[element.type];
-
-    return action(element, makePath(path, item.propertyName));
-  }),
+  withChildren: (item, path, func) => func(item.children, makePath(path, item.propertyName)),
 };
 
-export default (ast) => {
+const plainFormat = (ast, path = '') => {
   const result = ast.map((item) => {
     const action = actions[item.type];
 
-    return action(item, '');
+    return action(item, path, plainFormat);
   });
 
   return _.flattenDeep(result).join('\n');
 };
+
+export default plainFormat;
